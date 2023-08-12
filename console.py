@@ -1,3 +1,4 @@
+from typing import List
 #!/usr/bin/python3
 """Defines the HBnB console."""
 import cmd
@@ -13,7 +14,24 @@ from models.amenity import Amenity
 from models.review import Review
 
 
-def parse(arg):
+def parse(arg: str) -> List[str]:
+    """
+    Split a string argument into a list of tokens.
+
+    The function handles cases where the string contains curly braces or square brackets by treating them as separate tokens.
+
+    Args:
+        arg (str): The string argument to be parsed.
+
+    Returns:
+        List[str]: The list of tokens.
+
+    Example:
+        >>> arg = "create [User]"
+        >>> argl = parse(arg)
+        >>> print(argl)
+        ['create', '[User]']
+    """
     curly_braces = re.search(r"\{(.*?)\}", arg)
     brackets = re.search(r"\[(.*?)\]", arg)
     if curly_braces is None:

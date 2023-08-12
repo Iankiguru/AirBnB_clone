@@ -6,7 +6,6 @@ import os
 
 
 class FileStorage:
-
     """Class for serializtion and deserialization of base classes."""
     __file_path = "file.json"
     __objects = {}
@@ -28,14 +27,6 @@ class FileStorage:
 
     def classes(self):
         """Returns a dictionary of valid classes and their references."""
-        from models.base_model import BaseModel
-        from models.user import User
-        from models.state import State
-        from models.city import City
-        from models.amenity import Amenity
-        from models.place import Place
-        from models.review import Review
-
         classes = {"BaseModel": BaseModel,
                    "User": User,
                    "State": State,
@@ -51,10 +42,9 @@ class FileStorage:
             return
         with open(FileStorage.__file_path, "r", encoding="utf-8") as f:
             obj_dict = json.load(f)
-            obj_dict = {k: self.classes()[v["__class__"]](**v)
-                        for k, v in obj_dict.items()}
-            # TODO: should this overwrite or insert?
-            FileStorage.__objects = obj_dict
+            for k, v in obj_dict.items():
+                if k not in FileStorage.__objects:
+                    FileStorage.__objects[k] = self.classes()[v["__class__"]](**v)
 
     def attributes(self):
         """Returns the valid attributes and their types for classname."""
