@@ -1,61 +1,122 @@
-#!/usr/bin/python3
-"""Module for Base class
-Contains the Base class for the AirBnB clone console.
+#!/usr/bin/env python3
+"""
+Command Interpreter for HBNB
 """
 
-import uuid
-from datetime import datetime
+import cmd
+from models.base_model import BaseModel
 from models import storage
 
+class HBNBCommand(cmd.Cmd):
+    """Command Interpreter Class"""
 
-class BaseModel:
+    prompt = "(hbnb) "
 
-    """Class for base model of object hierarchy."""
+    def do_quit(self, arg):
+        """Quit command to exit the program"""
+        return True
 
-    def __init__(self, *args, **kwargs):
-        """Initialization of a Base instance.
+    def do_EOF(self, arg):
+        """Exit the program on EOF"""
+        print()
+        return True
 
-        Args:
-            - *args: list of arguments
-            - **kwargs: dict of key-values arguments
-        """
+    def do_create(self, arg):
+        """Create a new instance of BaseModel and print its id"""
+        if not arg:
+            print("** class name missing **")
+            return
+        try:
+            new_instance = eval(arg)()
+            new_instance.save()
+            print(new_instance.id)
+        except:
+            print("** class doesn't exist **")
 
-        if kwargs is not None and kwargs != {}:
-            for key in kwargs:
-                if key == "created_at":
-                    self.__dict__["created_at"] = datetime.strptime(
-                        kwargs["created_at"], "%Y-%m-%dT%H:%M:%S.%f")
-                elif key == "updated_at":
-                    self.__dict__["updated_at"] = datetime.strptime(
-                        kwargs["updated_at"], "%Y-%m-%dT%H:%M:%S.%f")
-                else:
-                    self.__dict__[key] = kwargs[key]
+    def do_show(self, arg):
+        """Prints the string representation of an instance"""
+        args = arg.split()
+        if not args:
+            print("** class name missing **")
+            return
+        class_name = args[0]
+        if class_name not in storage.classes():
+            print("** class doesn't exist **")
+            return
+        if len(args) < 2:
+            print("** instance id missing **")
+            return
+        instance_id = args[1]
+        key = class_name + "." + instance_id
+        if key in storage.all():
+            print(storage.all()[key])
         else:
-            self.id = str(uuid.uuid4())
-            self.created_at = datetime.now()
-            self.updated_at = datetime.now()
-            storage.new(self)
+            print("** no instance found **")
 
-    def __str__(self):
-        """Returns a human-readable string representation
-        of an instance."""
+    def do_destroy(self, arg):
+        """Deletes an instance based on the class name and id"""
+        args = arg.split()
+        if not args:
+            print("** class name missing **")
+            return
+        class_name = args[0]
+        if class_name not in storage.classes():
+            print("** class doesn't exist **")
+            return
+        if len(args) < 2:
+            print("** instance id missing **")
+            return
+        instance_id = args[1]
+        key = class_name + "." + instance_id
+        if key in storage.all():
+            del storage.all()[key]
+            storage.save()
+        else:
+            print("** no instance found **")
 
-        return "[{}] ({}) {}".\
-            format(type(self).__name__, self.id, self.__dict__)
+    def do_all(self, arg):
+        """Prints all instances or instances of a class"""
+        args = arg.split()
+        objects = storage.all()
+        if not args:
+            print([str(obj) for obj in objects.values()])
+        else:
+            class_name = args[0]
+            if class_name not in storage.classes():
+                print("** class doesn't exist **")
+                return
+            class_objects = [str(obj) for key, obj in objects.items() if key.startswith(class_name + ".")]
+            print(class_objects)
 
-    def save(self):
-        """Updates the updated_at attribute
-        with the current datetime."""
+    def do_update(self, arg):
+        """Updates an instance based on the class name and id"""
+        args = arg.split()
+        if not args:
+            print("** class name missing **")
+            return
+        class_name = args[0]
+        if class_name not in storage.classes():
+            print("** class doesn't exist **")
+            return
+        if len(args) < 2:
+            print("** instance id missing **")
+            return
+        instance_id = args[1]
+        key = class_name + "." + instance_id
+        if key not in storage.all():
+            print("** no instance found **")
+            return
+        if len(args) < 3:
+            print("** attribute name missing **")
+            return
+        if len(args) < 4:
+            print("** value missing **")
+            return
+        attribute_name = args[2]
+        attribute_value = args[3]
+        instance = storage.all()[key]
+        setattr(instance, attribute_name, attribute_value)
+        instance.save()
 
-        self.updated_at = datetime.now()
-        storage.save()
-
-    def to_dict(self):
-        """Returns a dictionary representation of an instance."""
-
-        my_dict = self.__dict__.copy()
-        my_dict["__class__"] = type(self).__name__
-        my_dict["created_at"] = my_dict["created_at"].isoformat()
-        my_dict["updated_at"] = my_dict["updated_at"].isoformat()
-        return my_dict
-
+if __name__ == '__main__':
+    HBNBCommand().cmdloop()
