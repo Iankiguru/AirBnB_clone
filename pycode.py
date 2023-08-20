@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 def calculate_average(numbers):
     """
     Calculate the average of a list of numbers.

@@ -1,61 +1,259 @@
 #!/usr/bin/python3
-"""Module for Base class
-Contains the Base class for the AirBnB clone console.
+"""
+Console module for the command-line interpreter.
 """
 
-import uuid
-from datetime import datetime
+import cmd
+from models.base_model import BaseModel
+from models.user import User
+from models.state import State
+from models.city import City
+from models.amenity import Amenity
+from models.place import Place
+from models.review import Review
 from models import storage
 
+class HBNBCommand(cmd.Cmd):
+    """
+    Command interpreter class.
+    """
 
-class BaseModel:
+    prompt = "(hbnb) "
 
-    """Class for base model of object hierarchy."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialization of a Base instance.
-
-        Args:
-            - *args: list of arguments
-            - **kwargs: dict of key-values arguments
+    def do_quit(self, arg):
         """
+        Quit command to exit the program.
+        """
+        return True
 
-        if kwargs is not None and kwargs != {}:
-            for key in kwargs:
-                if key == "created_at":
-                    self.__dict__["created_at"] = datetime.strptime(
-                        kwargs["created_at"], "%Y-%m-%dT%H:%M:%S.%f")
-                elif key == "updated_at":
-                    self.__dict__["updated_at"] = datetime.strptime(
-                        kwargs["updated_at"], "%Y-%m-%dT%H:%M:%S.%f")
-                else:
-                    self.__dict__[key] = kwargs[key]
+    def do_EOF(self, arg):
+        """
+        Exit the program on EOF (Ctrl-D).
+        """
+        print("")  # Print a newline before exiting
+        return True
+
+    def emptyline(self):
+        """
+        Do nothing on an empty line.
+        """
+        pass
+
+    def do_create(self, arg):
+        """
+        Create a new instance of BaseModel, User, State, City, Amenity, Place, or Review.
+        """
+        if not arg:
+            print("** class name missing **")
+            return
+        try:
+            new_instance = eval(arg)()
+            new_instance.save()
+            print(new_instance.id)
+        except NameError:
+            print("** class doesn't exist **")
+
+    def do_show(self, arg):
+        """
+        Print the string representation of an instance based on class name and id.
+        """
+        args = arg.split()
+        valid_classes = ["BaseModel", "User", "State", "City", "Amenity", "Place", "Review"]
+        if not args:
+            print("** class name missing **")
+            return
+        if args[0] not in valid_classes:
+            print("** class doesn't exist **")
+            return
+        if len(args) < 2:
+            print("** instance id missing **")
+            return
+        key = "{}.{}".format(args[0], args[1])
+        objects = storage.all()
+        if key in objects:
+            print(objects[key])
         else:
-            self.id = str(uuid.uuid4())
-            self.created_at = datetime.now()
-            self.updated_at = datetime.now()
-            storage.new(self)
+            print("** no instance found **")
 
-    def __str__(self):
-        """Returns a human-readable string representation
-        of an instance."""
+    def do_destroy(self, arg):
+        """
+        Delete an instance based on its ID.
+        """
+        args = arg.split()
+        valid_classes = ["BaseModel", "User", "State", "City", "Amenity", "Place", "Review"]
+        if not args:
+            print("** class name missing **")
+            return
+        if args[0] not in valid_classes:
+            print("** class doesn't exist **")
+            return
+        if len(args) < 2:
+            print("** instance id missing **")
+            return
+        key = "{}.{}".format(args[0], args[1])
+        objects = storage.all()
+        if key in objects:
+            del objects[key]
+            storage.save()
+        else:
+            print("** no instance found **")
 
-        return "[{}] ({}) {}".\
-            format(type(self).__name__, self.id, self.__dict__)
+    def do_all(self, arg):
+        """
+        Print string representations of all instances or instances of a class.
+        """
+        args = arg.split()
+        valid_classes = ["BaseModel", "User", "State", "City", "Amenity", "Place", "Review"]
+        if args and args[0] not in valid_classes:
+            print("** class doesn't exist **")
+            return
+        if args:
+            class_name = args[0]
+            instances = storage.all().values()
+            instances_of_class = [instance for instance in instances if instance.__class__.__name__ == class_name]
+            output = [str(instance) for instance in instances_of_class]
+            print(output)
+        else:
+            objects = storage.all()
+            output = [str(obj) for obj in objects.values()]
+            print(output)
 
-    def save(self):
-        """Updates the updated_at attribute
-        with the current datetime."""
+    def do_update(self, arg):
+        """
+        Update an instance's attributes.
+        """
+        args = arg.split()
+        valid_classes = ["BaseModel", "User", "State", "City", "Amenity", "Place", "Review"]
+        if not args:
+            print("** class name missing **")
+            return
+        if args[0] not in valid_classes:
+            print("** class doesn't exist **")
+            return
+        if len(args) < 2:
+            print("** instance id missing **")
+            return
+        key = "{}.{}".format(args[0], args[1])
+        objects = storage.all()
+        if key not in objects:
+            print("** no instance found **")
+            return
+        if len(args) < 3:
+            print("** attribute name missing **")
+            return
+        if len(args) < 4:
+            print("** value missing **")
+            return
+        obj = objects[key]
+        setattr(obj, args[2], args[3])
+        obj.save()
 
-        self.updated_at = datetime.now()
-        storage.save()
+    def do_count(self, arg):
+        """
+        Count the number of instances of a class.
+        """
+        args = arg.split()
+        valid_classes = ["BaseModel", "User", "State", "City", "Amenity", "Place", "Review"]
+        if not args:
+            print("** class name missing **")
+            return
+        if args[0] not in valid_classes:
+            print("** class doesn't exist **")
+            return
+        class_name = args[0]
+        instances = storage.all().values()
+        instances_of_class = [instance for instance in instances if instance.__class__.__name__ == class_name]
+        count = len(instances_of_class)
+        print(count)
 
-    def to_dict(self):
-        """Returns a dictionary representation of an instance."""
+    def do_destroy(self, arg):
+        """
+        Delete an instance based on its ID.
+        """
+        args = arg.split()
+        valid_classes = ["BaseModel", "User", "State", "City", "Amenity", "Place", "Review"]
+        if not args:
+            print("** class name missing **")
+            return
+        if args[0] not in valid_classes:
+            print("** class doesn't exist **")
+            return
+        if len(args) < 2:
+            print("** instance id missing **")
+            return
+        key = "{}.{}".format(args[0], args[1])
+        objects = storage.all()
+        if key in objects:
+            del objects[key]
+            storage.save()
+        else:
+            print("** no instance found **")
 
-        my_dict = self.__dict__.copy()
-        my_dict["__class__"] = type(self).__name__
-        my_dict["created_at"] = my_dict["created_at"].isoformat()
-        my_dict["updated_at"] = my_dict["updated_at"].isoformat()
-        return my_dict
+    def do_update(self, arg):
+        """
+        Update an instance's attributes.
+        """
+        args = arg.split()
+        valid_classes = ["BaseModel", "User", "State", "City", "Amenity", "Place", "Review"]
+        if not args:
+            print("** class name missing **")
+            return
+        if args[0] not in valid_classes:
+            print("** class doesn't exist **")
+            return
+        if len(args) < 2:
+            print("** instance id missing **")
+            return
+        key = "{}.{}".format(args[0], args[1])
+        objects = storage.all()
+        if key not in objects:
+            print("** no instance found **")
+            return
+        if len(args) < 3:
+            print("** attribute name missing **")
+            return
+        if len(args) < 4:
+            print("** value missing **")
+            return
+        obj = objects[key]
+        setattr(obj, args[2], args[3])
+        obj.save()
 
+    def do_update(self, arg):
+        """
+        Update an instance's attributes using a dictionary representation.
+        """
+        args = arg.split()
+        valid_classes = ["BaseModel", "User", "State", "City", "Amenity", "Place", "Review"]
+        if not args:
+            print("** class name missing **")
+            return
+        if args[0] not in valid_classes:
+            print("** class doesn't exist **")
+            return
+        if len(args) < 2:
+            print("** instance id missing **")
+            return
+        key = "{}.{}".format(args[0], args[1])
+        objects = storage.all()
+        if key not in objects:
+            print("** no instance found **")
+            return
+        if len(args) < 3:
+            print("** attribute dictionary missing **")
+            return
+        obj = objects[key]
+        try:
+            attr_dict = eval(args[2])
+        except SyntaxError:
+            print("** invalid dictionary format **")
+            return
+        if not isinstance(attr_dict, dict):
+            print("** invalid dictionary format **")
+            return
+        for attr_name, attr_value in attr_dict.items():
+            setattr(obj, attr_name, attr_value)
+        obj.save()
+
+if __name__ == '__main__':
+    HBNBCommand().cmdloop()

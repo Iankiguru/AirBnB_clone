@@ -8,11 +8,10 @@ from time import sleep
 import json
 from models.engine.file_storage import FileStorage
 
-
-class Test_fileStorage(unittest.TestCase):
+class TestFileStorage(unittest.TestCase):
     """Test FileStorage Class"""
     def test_instances(self):
-        """chequeamos instantation"""
+        """Check instantiation"""
         obj = FileStorage()
         self.assertIsInstance(obj, FileStorage)
 
@@ -23,5 +22,5 @@ class Test_fileStorage(unittest.TestCase):
         self.assertIsNotNone(FileStorage.save)
         self.assertIsNotNone(FileStorage.reload)
 
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()
